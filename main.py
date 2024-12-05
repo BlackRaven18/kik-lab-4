@@ -5,7 +5,7 @@ from services.stream_cipher import encrypt_decrypt, text_to_bits
 
 from algorithms.berlekamp_massey import calculate_register_parameters
 
-from utils.file import read_file
+from utils.file import read_file, write_file
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -21,6 +21,7 @@ def parse_args():
     parser.add_argument('-ol', '--output_length', type=int, help='Length of the output bit stream.')
 
     parser.add_argument('-i', '--i', type=str, help='Input file.')
+    parser.add_argument('-o', '--o', type=str, help='Output file.')
     parser.add_argument('-seed', type=str, help='Seed input file (for Berlekamp-Massey method).')
     parser.add_argument("-taps", type=str, help="Feedback taps input file (for Berlekamp-Massey method).")
 
@@ -55,14 +56,16 @@ def main():
         key_stream = lfsr(initial_state, m, feedback_taps, output_length)
 
 
-        encrypted_message = encrypt_decrypt(input_text, key_stream)
+        encrypted_message, encypted_bits = encrypt_decrypt(input_text, key_stream)
         print("Zaszyfrowana wiadomość:")
         print(encrypted_message)
 
-        # Deszyfrowanie wiadomości
-        decrypted_message = encrypt_decrypt(encrypted_message, key_stream)
-        print("Odszyfrowana wiadomość:")
-        print(decrypted_message)
+        write_file(args.o, ",".join(str(element) for element in encypted_bits))
+
+        # # Deszyfrowanie wiadomości
+        # decrypted_message = encrypt_decrypt(encrypted_message, key_stream)
+        # print("Odszyfrowana wiadomość:")
+        # print(decrypted_message)
 
     elif args.Berlekamp_Massey:
         seed_raw = read_file(args.seed)
