@@ -33,3 +33,11 @@ def encrypt_decrypt(text, lfsr_key_stream) -> tuple[str, list]:
     key_bits = lfsr_key_stream[:len(text_bits)]
     encrypted_bits = [text_bit ^ key_bit for text_bit, key_bit in zip(text_bits, key_bits)]
     return bits_to_text(encrypted_bits), encrypted_bits
+
+def recover_key(input_text: str, cipher_bits: list) -> str:
+
+    text_bits = text_to_bits(input_text)
+
+    recovered_key = [text_bit ^ cipher_bit for text_bit, cipher_bit in zip(text_bits, cipher_bits)]
+
+    return recovered_key
