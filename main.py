@@ -1,10 +1,11 @@
 import argparse
 
-from services.register import lfsr, calculate_tabs
+from models.lfsr import LFSR
 from services.stream_cipher import encrypt_decrypt, text_to_bits, recover_key
 
 from algorithms.berlekamp_massey import calculate_register_parameters
 
+from utils.lfsr import calculate_tabs
 from utils.file import read_file, write_file
 
 def parse_args():
@@ -37,9 +38,12 @@ def main():
 
         feedback_taps = [int(tap) for tap in args.feedback_taps.split(',')]
         m = args.m
-
         output_length = args.output_length
-        output_stream = lfsr(initial_state, m, feedback_taps, output_length)
+
+        register = LFSR(initial_state, m, feedback_taps)
+
+        output_stream = register.generate_output(output_length)
+
         print("output_stream:", output_stream)
 
     elif args.encrypt:
@@ -50,10 +54,10 @@ def main():
         m = args.m
 
         input_text = read_file(args.i, True)
-        print("")
         output_length = len(text_to_bits(input_text))  # Liczba bitów potrzebnych do zaszyfrowania wiadomości
-        key_stream = lfsr(initial_state, m, feedback_taps, output_length)
 
+        register = LFSR(initial_state, m, feedback_taps)
+        key_stream = register.generate_output(output_length)
 
         encrypted_message, encypted_bits = encrypt_decrypt(input_text, key_stream)
         print("Zaszyfrowana wiadomość:")
@@ -62,10 +66,6 @@ def main():
         write_file(args.o, ",".join(str(element) for element in encypted_bits))
         write_file("files/key_stream.txt", ",".join(str(element) for element in key_stream))
 
-        # # Deszyfrowanie wiadomości
-        # decrypted_message = encrypt_decrypt(encrypted_message, key_stream)
-        # print("Odszyfrowana wiadomość:")
-        # print(decrypted_message)
 
     elif args.attack:
         input_text = read_file(args.i, True)
@@ -90,11 +90,20 @@ def main():
         taps = calculate_tabs(C.copy())
 
         print('Taps:', taps)
-        
-        new_key = lfsr(initial_state, L, taps, len(recovered_key))
+
+        new_register = LFSR(initial_state, L, taps)
+
+        new_key = new_register.generate_output(len(recovered_key))
 
         print("recovered_key:", recovered_key)
         print("new_key:      ", new_key)
+
+        if recovered_key == new_key:
+            print("Odszyfrowany klucz jest poprawny.")
+            deciphered_message, _ = encrypt_decrypt(cipher_text, new_key)
+            print("Odszyfrowana wiadomość:", deciphered_message)
+        else:
+            print("Odszyfrowany klucz jest niepoprawny.")
 
 
 

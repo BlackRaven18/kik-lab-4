@@ -20,6 +20,3 @@ def lfsr(initial_state: list, m: int, feedback_taps: list, output_length: int) -
     
     return output
 
-def calculate_tabs(C: list) -> list:
-    tabs = [i for i, bit in enumerate(reversed(C[:-1]), start=1) if bit == 1]
-    return tabs
