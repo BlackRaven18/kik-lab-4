@@ -1,10 +1,11 @@
 import argparse
 
-from services.register import lfsr
+from models.lfsr import LFSR
 from services.stream_cipher import encrypt_decrypt, text_to_bits
 
 from algorithms.berlekamp_massey import calculate_register_parameters
 
+from utils.lfsr import calculate_tabs
 from utils.file import read_file
 
 def parse_args():
@@ -33,18 +34,19 @@ def main():
 
     if args.test_register:
         initial_state = [int(bit) for bit in args.initial_state.split(',')]
-        initial_state.reverse()
 
         feedback_taps = [int(tap) for tap in args.feedback_taps.split(',')]
         m = args.m
 
         output_length = args.output_length
-        output_stream = lfsr(initial_state, m, feedback_taps, output_length)
+
+        register = LFSR(initial_state, m, feedback_taps)
+
+        output_stream = register.generate_output(output_length)
         print("output_stream:", output_stream)
 
     elif args.decrypt:
         initial_state = [int(bit) for bit in args.initial_state.split(',')]
-        initial_state.reverse()
 
         feedback_taps = [int(tap) for tap in args.feedback_taps.split(',')]
         m = args.m
@@ -52,7 +54,10 @@ def main():
         input_text = read_file(args.i, True)
         print("")
         output_length = len(text_to_bits(input_text))  # Liczba bitów potrzebnych do zaszyfrowania wiadomości
-        key_stream = lfsr(initial_state, m, feedback_taps, output_length)
+
+        register = LFSR(initial_state, m, feedback_taps)
+
+        key_stream = register.generate_output(output_length)
 
 
         encrypted_message = encrypt_decrypt(input_text, key_stream)
@@ -70,11 +75,7 @@ def main():
         seed = [int(bit) for bit in seed_raw.split(',')]
 
         C, L = calculate_register_parameters(seed)
-
-        print("C:", C)
-        print("L:", L)
-
-
+        print("taps:", calculate_tabs(C))
 
     else:
         raise Exception("Nie wybrano trybu: --test_register, --decrypt")
