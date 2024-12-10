@@ -29,4 +29,7 @@ def calculate_register_parameters(seed: List[int]) -> tuple[List[int], int]:
             B = T
             m = N
 
+    print("C(x):", C)
+    print("L:", L)
+
     return C, L

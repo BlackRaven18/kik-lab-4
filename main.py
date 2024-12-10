@@ -1,7 +1,7 @@
 import argparse
 
 from models.lfsr import LFSR
-from services.stream_cipher import encrypt_decrypt, text_to_bits, recover_key
+from services.stream_cipher import encrypt_decrypt, text_to_bits, bits_to_text, recover_key
 
 from algorithms.berlekamp_massey import calculate_register_parameters
 
@@ -12,7 +12,7 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="Parametry programu"
     )
-    parser.add_argument('--test_register', action='store_true', help='Test register')
+
     parser.add_argument('-e', '--encrypt', action='store_true', help='Encrypt message')
     parser.add_argument('-a', '--attack', action='store_true', help='Encrypt message')
 
@@ -22,7 +22,7 @@ def parse_args():
     parser.add_argument('-ol', '--output_length', type=int, help='Length of the output bit stream.')
 
     parser.add_argument('-i', '--i', type=str, help='Input file.')
-    parser.add_argument('-s', '--szyfrogram', type=str, help='Secret file.')
+    parser.add_argument('--szyfrogram', type=str, help='Secret file.')
     parser.add_argument('-o', '--o', type=str, help='Output file.')
 
     args = parser.parse_args()
@@ -32,23 +32,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    if args.test_register:
+    if args.encrypt:
         initial_state = [int(bit) for bit in args.initial_state.split(',')]
-        initial_state.reverse()
-
-        feedback_taps = [int(tap) for tap in args.feedback_taps.split(',')]
-        m = args.m
-        output_length = args.output_length
-
-        register = LFSR(initial_state, m, feedback_taps)
-
-        output_stream = register.generate_output(output_length)
-
-        print("output_stream:", output_stream)
-
-    elif args.encrypt:
-        initial_state = [int(bit) for bit in args.initial_state.split(',')]
-        initial_state.reverse()
 
         feedback_taps = [int(tap) for tap in args.feedback_taps.split(',')]
         m = args.m
@@ -77,12 +62,9 @@ def main():
         print(recovered_key)
 
         C, L = calculate_register_parameters(recovered_key)
-        print("C:", C)
-        print("L:", L)
 
-        # creating new cryptosystem
+        # Creating new cryptosystem
         initial_state = recovered_key[:L]
-        initial_state.reverse() # !!! important
 
         print("New initial state:")
         print(initial_state)
@@ -95,22 +77,17 @@ def main():
 
         new_key = new_register.generate_output(len(recovered_key))
 
-        print("recovered_key:", recovered_key)
-        print("new_key:      ", new_key)
-
         if recovered_key == new_key:
             print("Odszyfrowany klucz jest poprawny.")
-            deciphered_message, _ = encrypt_decrypt(cipher_text, new_key)
+
+            deciphered_message, _ = encrypt_decrypt(bits_to_text(cipher_bits), new_key)
+            
             print("Odszyfrowana wiadomość:", deciphered_message)
         else:
             print("Odszyfrowany klucz jest niepoprawny.")
 
-
-
-
     else:
         raise Exception("Nie wybrano trybu: --test_register, --decrypt")
-
 
 if __name__ == "__main__":
     main()

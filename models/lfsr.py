@@ -2,6 +2,7 @@
 class LFSR:
     def __init__(self, initial_state, m, feedback_taps):
         self.initial_state = initial_state
+        self.initial_state.reverse()
 
         if len(initial_state) != m:
             raise ValueError("Długość stanu początkowego musi być równa stopniowi rejestru (m).")
